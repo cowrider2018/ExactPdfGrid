@@ -53,6 +53,7 @@ def convert():
     min_line      = int(request.form.get("min_line",       8))
     ink_threshold = int(request.form.get("ink_threshold", 240))
     cluster_gap   = int(request.form.get("cluster_gap",    8))
+    aspect_ratio  = float(request.form.get("aspect_ratio",  40.0))
 
     # Write uploaded PDF to a temp file
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
@@ -71,6 +72,7 @@ def convert():
                 img,
                 min_line_length=min_line,
                 ink_threshold=ink_threshold,
+                aspect_ratio=aspect_ratio,
             )
 
             cells, ys, xs = build_cell_grid(accepted, cluster_gap=cluster_gap)

@@ -158,6 +158,7 @@ def detect_line_segments(
     min_line_length: int = 40,
     ink_threshold: int = 200,
     max_gap: int = 6,
+    aspect_ratio: float = 40.0,
 ) -> tuple[list[LineSegment], list[LineSegment]]:
     """
     Step 1 + Step 2.
@@ -174,8 +175,18 @@ def detect_line_segments(
     h_mask = _morpho_mask(binary, "h", min_line_length)
     v_mask = _morpho_mask(binary, "v", min_line_length)
 
-    raw_h = _contours_to_raw_segments(h_mask, horiz=True,  min_length=min_line_length)
-    raw_v = _contours_to_raw_segments(v_mask, horiz=False, min_length=min_line_length)
+    raw_h = _contours_to_raw_segments(
+        h_mask,
+        horiz=True,
+        min_length=min_line_length,
+        aspect_ratio=aspect_ratio,
+    )
+    raw_v = _contours_to_raw_segments(
+        v_mask,
+        horiz=False,
+        min_length=min_line_length,
+        aspect_ratio=aspect_ratio,
+    )
 
     accepted: list[LineSegment] = []
     rejected: list[LineSegment] = []

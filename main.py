@@ -58,6 +58,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="Pixel brightness below which ink is assumed (default: 240, 80% brightness)")
     p.add_argument("--cluster-gap", type=int, default=8,
                    help="Max gap to cluster nearby grid-line positions (default: 8)")
+    p.add_argument("--aspect-ratio", type=float, default=40.0,
+                   help="Aspect ratio threshold for line detection blobs (default: 40.0)")
     p.add_argument("--border-thickness", type=int, default=6,
                    help="Half-thickness for border presence probe (default: 6)")
     p.add_argument("--border-density", type=float, default=0.20,
@@ -84,6 +86,7 @@ def process_page(
         img,
         min_line_length=args.min_line,
         ink_threshold=args.ink_threshold,
+        aspect_ratio=args.aspect_ratio,
     )
 
     # Step 3: build cell grid (handles merged cells)

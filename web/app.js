@@ -68,6 +68,7 @@
     formData.append('dpi',           document.getElementById('dpi').value);
     formData.append('min_line',      document.getElementById('minLine').value);
     formData.append('ink_threshold', document.getElementById('inkThreshold').value);
+    formData.append('aspect_ratio',  document.getElementById('aspectRatio').value);
     formData.append('cluster_gap',   document.getElementById('clusterGap').value);
 
     convertBtn.disabled = true;
