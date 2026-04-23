@@ -37,7 +37,7 @@ from pdf_to_image import pdf_to_images, save_page_images
 from table_detection import detect_line_segments, build_cell_grid, draw_debug
 import fitz
 from ocr_processing import extract_cells_text
-from xlsx_output import resolve_grid, write_xlsx
+from xlsx_output import resolve_grid, write_xlsx_workbook
 
 
 # ---------------------------------------------------------------------------
@@ -137,6 +137,8 @@ def main(argv: list[str] | None = None) -> None:
     images = pdf_to_images(str(pdf_path), dpi=args.dpi)
     save_page_images(images, str(out_dir / "images"))
 
+    sheet_data: list[tuple[str, list, list[int], list[int]]] = []
+
     # ── Steps 2-4: per-page detection + text extraction ────────────────────
     for page_index, img in enumerate(images):
         fitz_page = fitz_doc[page_index]
@@ -148,15 +150,15 @@ def main(argv: list[str] | None = None) -> None:
         # ── Step 5: resolve logical grid ───────────────────────────────────
         print(f"\n[Step 5] Resolving grid for page {page_index + 1}…")
         sorted_cells = resolve_grid(cells)
+        sheet_data.append((f"Page{page_index + 1}", sorted_cells, ys, xs))
 
-        # ── Step 6: write xlsx ──────────────────────────────────────────────
-        print(f"\n[Step 6] Writing xlsx for page {page_index + 1}…")
+    if sheet_data:
+        print("\n[Step 6] Writing workbook with multiple sheets…")
         stem = pdf_path.stem
-        xlsx_path = str(out_dir / f"{stem}_page{page_index + 1:03d}.xlsx")
-        write_xlsx(
-            sorted_cells, ys, xs,
+        xlsx_path = str(out_dir / f"{stem}.xlsx")
+        write_xlsx_workbook(
+            sheet_data,
             out_path=xlsx_path,
-            sheet_name=f"Page{page_index + 1}",
             dpi=args.dpi,
         )
 
