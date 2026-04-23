@@ -126,7 +126,6 @@ def main(argv: list[str] | None = None) -> None:
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "images").mkdir(exist_ok=True)
-    (out_dir / "cells").mkdir(exist_ok=True)
 
     print(f"ExactPdfGrid  –  {pdf_path.name}")
     print(f"  DPI={args.dpi}  out={out_dir}")
