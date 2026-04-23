@@ -97,6 +97,45 @@ def _estimate_row_heights(
     return heights
 
 
+def _populate_worksheet(
+    ws,
+    cells: list[CellRegion],
+    ys: list[int],
+    xs: list[int],
+    dpi: int = 200,
+    apply_borders: bool = True,
+    apply_size_hints: bool = True,
+) -> None:
+    """Write a single worksheet with the given grid data."""
+    if apply_size_hints and len(xs) >= 2 and len(ys) >= 2:
+        col_widths = _estimate_col_widths(cells, xs, dpi)
+        row_heights = _estimate_row_heights(cells, ys, dpi)
+
+        for ci, cw in enumerate(col_widths):
+            ws.column_dimensions[get_column_letter(ci + 1)].width = cw
+        for ri, rh in enumerate(row_heights):
+            ws.row_dimensions[ri + 1].height = rh
+
+    for cell in cells:
+        xl_row = cell.row + 1
+        xl_col = cell.col + 1
+        ws_cell = ws.cell(row=xl_row, column=xl_col, value=cell.text or None)
+        ws_cell.alignment = _WRAP
+        if apply_borders:
+            ws_cell.border = _BORDER
+
+        if cell.row_span > 1 or cell.col_span > 1:
+            merge_row_end = xl_row + cell.row_span - 1
+            merge_col_end = xl_col + cell.col_span - 1
+            ws.merge_cells(
+                start_row=xl_row, start_column=xl_col,
+                end_row=merge_row_end, end_column=merge_col_end,
+            )
+            ws_cell.alignment = _WRAP
+            if apply_borders:
+                ws_cell.border = _BORDER
+
+
 def write_xlsx(
     cells: list[CellRegion],
     ys: list[int],
@@ -107,60 +146,38 @@ def write_xlsx(
     apply_borders: bool = True,
     apply_size_hints: bool = True,
 ) -> None:
-    """
-    Write all cells to an xlsx workbook.
-
-    Parameters
-    ----------
-    cells       : resolved cell list (from resolve_grid)
-    ys          : row boundary y-pixel positions (len = n_rows + 1)
-    xs          : col boundary x-pixel positions (len = n_cols + 1)
-    out_path    : destination .xlsx file path
-    sheet_name  : worksheet tab name
-    dpi         : DPI used when rendering PDF (for column-width estimation)
-    apply_borders : draw thin borders around every cell
-    apply_size_hints : set approximate row heights and col widths
-    """
+    """Write all cells to an xlsx workbook with a single sheet."""
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = sheet_name
-
-    # ---- column widths and row heights -------------------------------------
-    if apply_size_hints and len(xs) >= 2 and len(ys) >= 2:
-        col_widths = _estimate_col_widths(cells, xs, dpi)
-        row_heights = _estimate_row_heights(cells, ys, dpi)
-
-        for ci, cw in enumerate(col_widths):
-            ws.column_dimensions[get_column_letter(ci + 1)].width = cw
-        for ri, rh in enumerate(row_heights):
-            ws.row_dimensions[ri + 1].height = rh
-
-    # ---- write cells -------------------------------------------------------
-    for cell in cells:
-        # openpyxl is 1-based
-        xl_row = cell.row + 1
-        xl_col = cell.col + 1
-
-        # Write text to the top-left cell of the span
-        ws_cell = ws.cell(row=xl_row, column=xl_col, value=cell.text or None)
-        ws_cell.alignment = _WRAP
-        if apply_borders:
-            ws_cell.border = _BORDER
-
-        # Merge if span > 1
-        if cell.row_span > 1 or cell.col_span > 1:
-            merge_row_end = xl_row + cell.row_span - 1
-            merge_col_end = xl_col + cell.col_span - 1
-            ws.merge_cells(
-                start_row=xl_row, start_column=xl_col,
-                end_row=merge_row_end, end_column=merge_col_end,
-            )
-            # openpyxl requires the top-left cell to carry style after merge
-            ws_cell.alignment = _WRAP
-            if apply_borders:
-                ws_cell.border = _BORDER
-
-    # ---- save --------------------------------------------------------------
+    _populate_worksheet(ws, cells, ys, xs, dpi, apply_borders, apply_size_hints)
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     wb.save(out_path)
     print(f"  [xlsx_output] saved → {out_path}")
+
+
+def write_xlsx_workbook(
+    sheets: list[tuple[str, list[CellRegion], list[int], list[int]]],
+    out_path: str,
+    dpi: int = 200,
+    apply_borders: bool = True,
+    apply_size_hints: bool = True,
+) -> None:
+    """Write multiple sheets into the same xlsx workbook."""
+    if not sheets:
+        print("  [xlsx_output] no sheets to write.")
+        return
+
+    wb = openpyxl.Workbook()
+    title, cells, ys, xs = sheets[0]
+    ws = wb.active
+    ws.title = title
+    _populate_worksheet(ws, cells, ys, xs, dpi, apply_borders, apply_size_hints)
+
+    for title, cells, ys, xs in sheets[1:]:
+        ws = wb.create_sheet(title=title)
+        _populate_worksheet(ws, cells, ys, xs, dpi, apply_borders, apply_size_hints)
+
+    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+    wb.save(out_path)
+    print(f"  [xlsx_output] saved workbook with {len(sheets)} sheets → {out_path}")
