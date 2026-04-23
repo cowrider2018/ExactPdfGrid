@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ExactPdfGrid – PDF 表格提取</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header-decoration"></div>
+
+    <div class="header">
+      <div class="title-icon">📊</div>
+      <div>
+        <h1 class="main-title">ExactPdfGrid</h1>
+        <p class="subtitle">PDF 表格 → Excel 轉換工具</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="form-section">
+
+      <!-- PDF 上傳 -->
+      <div class="field">
+        <label class="label-icon">📄 PDF 檔案</label>
+        <input id="pdfFile" type="file" accept="application/pdf" />
+        <div id="pdfUploadArea" class="pdf-upload-area">
+          <div class="upload-icon">📁</div>
+          <p class="upload-text">拖放 PDF 到此</p>
+          <p class="upload-subtext">或點擊選擇檔案</p>
+          <div id="fileName" class="file-name"></div>
+        </div>
+      </div>
+
+      <!-- 進階設定 -->
+      <div class="field">
+        <label class="label-icon adv-toggle" id="advToggle" role="button" tabindex="0">
+          ⚙️ 進階設定
+          <span class="toggle-arrow">▶</span>
+        </label>
+        <div id="advPanel" class="adv-panel collapsed">
+          <div class="adv-row">
+            <label>DPI</label>
+            <input type="number" id="dpi" value="200" min="72" max="600" />
+          </div>
+          <div class="adv-row">
+            <label>最小線段像素</label>
+            <input type="number" id="minLine" value="8" min="1" max="200" />
+          </div>
+          <div class="adv-row">
+            <label>墨水門檻</label>
+            <input type="number" id="inkThreshold" value="240" min="100" max="255" />
+          </div>
+          <div class="adv-row">
+            <label>Cluster 間距</label>
+            <input type="number" id="clusterGap" value="8" min="1" max="40" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 送出按鈕 -->
+      <button id="convertBtn" class="btn-primary">轉換並下載 xlsx</button>
+
+      <div class="corner-decoration"></div>
+    </div>
+
+    <!-- 狀態 -->
+    <div id="status" class="status"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
