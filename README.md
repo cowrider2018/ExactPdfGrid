@@ -65,6 +65,45 @@ exactpdfgrid input.pdf --out output --dpi 300
 
 ## Python API
 
+### Shorthand（callable module）
+
+最簡寫法 — `import exactpdfgrid` 後直接呼叫套件：
+
+```python
+import exactpdfgrid
+
+# 一行搞定：(pdf_path, engine, out_dir)
+exactpdfgrid("input.pdf", "rapidocr", "outputpath")
+
+# 使用預設引擎 (PyMuPDF) 與預設輸出目錄 "output"
+exactpdfgrid("input.pdf")
+```
+
+也可以使用匯出的引擎常數（避免拼字錯誤）：
+
+```python
+import exactpdfgrid
+from exactpdfgrid import PYMUPDF, RAPIDOCR
+
+exactpdfgrid("input.pdf", RAPIDOCR, "outputpath")
+```
+
+或使用顯式的 `run()` 函式（功能相同，無 module-callable 魔法）：
+
+```python
+from exactpdfgrid import run, RAPIDOCR
+run("input.pdf", RAPIDOCR, "outputpath")
+```
+
+Shorthand 也支援額外 keyword 參數，會直接透傳給 `process_pdf`：
+
+```python
+from exactpdfgrid import DetectionConfig
+exactpdfgrid("input.pdf", "rapidocr", "out/", detection=DetectionConfig(dpi=300))
+```
+
+### 完整 API（`process_pdf`）
+
 最小可用例：
 
 ```python
