@@ -15,24 +15,24 @@ if not exist ".venv\Scripts\python.exe" (
     echo [1/4] Virtual environment already exists, skipping creation
 )
 
-:: 2. Install requirements
-echo [2/4] Installing dependencies...
-.venv\Scripts\python.exe -m pip install -r requirements.txt --quiet
+:: 2. Editable install with web extra
+echo [2/4] Installing exactpdfgrid (editable, with [web] extra)...
+.venv\Scripts\python.exe -m pip install -e ".[web]" --quiet
 if errorlevel 1 (
-    echo ERROR: Dependency installation failed
+    echo ERROR: Installation failed
     pause
     exit /b 1
 )
-echo Dependencies installed
+echo Installed exactpdfgrid in editable mode
 
 :: 3. Create output folder if missing
 if not exist "output" mkdir output
 
 :: 4. Start server in the same window
 echo [3/4] Starting server...
-start "" /B .venv\Scripts\python.exe server.py
+start "" /B .venv\Scripts\exactpdfgrid-web.exe
 
-:: 5. Open browser and output folder
+:: 5. Open browser
 echo [4/4] Opening browser
 timeout /t 2 /nobreak > nul
 start "" "http://localhost:5000"
