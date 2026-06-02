@@ -31,7 +31,8 @@ dependencies = [
 
 [project.optional-dependencies]
 web = ["flask>=2.3"]
-ocr = ["rapidocr-onnxruntime>=1.3"]
+ocr = ["rapidocr-openvino>=1.3"]
+ocr-onnx = ["rapidocr-onnxruntime>=1.3"]
 dev = ["pytest>=7", "ruff>=0.4"]
 all = ["exactpdfgrid[web,ocr]"]
 
