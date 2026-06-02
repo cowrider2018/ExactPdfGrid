@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "exactpdfgrid"
-version = "0.1.0"
+version = "0.1.1"
 description = "Extract bordered tables from PDFs and export them to Excel (.xlsx)."
 readme = "README.md"
 requires-python = ">=3.9"

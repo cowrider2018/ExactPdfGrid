@@ -20,7 +20,7 @@ from .utils import (
     strip_square_brackets,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 # Engine string aliases (UPPER_CASE so they don't shadow the real `pymupdf`
