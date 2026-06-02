@@ -51,3 +51,4 @@ exactpdfgrid = ["web/static/*"]
 
 [tool.setuptools_scm]
 version_file = "src/exactpdfgrid/_version.py"
+local_scheme = "no-local-version"
