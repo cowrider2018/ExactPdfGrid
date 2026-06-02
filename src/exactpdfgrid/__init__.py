@@ -29,7 +29,9 @@ __version__ = "0.1.1"
 #     exactpdfgrid("a.pdf", RAPIDOCR,    "out/")
 # resolves through engines.get_extractor.
 PYMUPDF: str = "pymupdf"
-RAPIDOCR: str = "rapidocr"
+RAPIDOCR: str = "rapidocr"            # auto: OpenVINO first, ONNX fallback
+RAPIDOCR_VINO: str = "rapidocr-vino"  # force OpenVINO runtime
+RAPIDOCR_ONNX: str = "rapidocr-onnx"  # force ONNX runtime
 
 
 def run(
@@ -92,6 +94,8 @@ __all__ = [
     "run",
     "PYMUPDF",
     "RAPIDOCR",
+    "RAPIDOCR_VINO",
+    "RAPIDOCR_ONNX",
     "CellRegion",
     "LineSegment",
     "TextExtractor",
