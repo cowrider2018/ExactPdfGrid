@@ -33,7 +33,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--border-density", type=float, default=0.20,
                    help="Ink density threshold to confirm interior border (default: 0.20)")
     p.add_argument("--engine", default="pymupdf",
-                   help="Text extractor engine: pymupdf (default) or rapidocr")
+                   help="Text extractor engine: pymupdf (default), "
+                        "rapidocr (auto: OpenVINO with ONNX fallback), "
+                        "rapidocr-vino (force OpenVINO), "
+                        "or rapidocr-onnx (force ONNX Runtime)")
     return p.parse_args(argv)
 
 
