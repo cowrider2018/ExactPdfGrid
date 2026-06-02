@@ -1,118 +1,78 @@
 # ExactPdfGrid
 
-從具邊框的 PDF 表格中辨識儲存格格線，並匯出為 Excel（.xlsx）。提供：
+Extract bordered tables from PDFs and export them to Excel (`.xlsx`).
 
-- **Python 套件 API**（`exactpdfgrid.process_pdf(...)`）
-- **CLI**（`exactpdfgrid <pdf>`）
-- **Web 介面**（`exactpdfgrid-web`，Flask）
+ExactPdfGrid detects table grid lines with OpenCV, reconstructs the cell
+layout (including merged cells), and writes a faithful `.xlsx` workbook with
+one sheet per page. Text is pulled from the PDF's native vector layer by
+default; for scanned PDFs you can swap in a RapidOCR backend.
 
-需求
-- Python ≥ 3.9
-- Windows / macOS / Linux
+The package ships **three usable surfaces** for the same pipeline:
 
----
+- **Library** — call from Python: `import exactpdfgrid; exactpdfgrid("in.pdf")`.
+- **API server** — Flask app exposing `POST /convert`, started with `exactpdfgrid-web`.
+- **Web UI** — static HTML/JS served by that same server at `GET /`, a drag-and-drop front end to the API.
 
-## 安裝
-
-### 可編輯模式（推薦給開發者）
-
-```powershell
-python -m pip install -e .
-```
-
-加上 optional extras：
-
-```powershell
-# Web UI（Flask）
-python -m pip install -e ".[web]"
-
-# OCR 後端（RapidOCR，可處理掃描型 PDF）
-python -m pip install -e ".[ocr]"
-
-# 全部
-python -m pip install -e ".[all]"
-```
-
-### 一鍵啟動 Web 介面（Windows）
-
-雙擊根目錄的 `start.bat`：
-1. 建立 `.venv`（若不存在）
-2. `pip install -e ".[web]"`
-3. 啟動 Flask 伺服器
-4. 自動開啟瀏覽器至 `http://localhost:5000`
+**Python ≥ 3.9** · Windows / macOS / Linux · default engine is OCR-free.
 
 ---
 
-## CLI 使用
+## Install
 
-```powershell
-exactpdfgrid input.pdf --out output --dpi 300
+```bash
+pip install exactpdfgrid
 ```
 
-主要旗標：
+Optional extras:
 
-| 旗標 | 預設 | 說明 |
-| :--- | :--- | :--- |
-| `--dpi` | 200 | 渲染解析度 |
-| `--out` | `output` | 輸出目錄 |
-| `--min-line` | 8 | 最小線段長度 (px) |
-| `--ink-threshold` | 240 | 視為墨水的亮度上限 |
-| `--cluster-gap` | 8 | 格線聚類最大距離 |
-| `--aspect-ratio` | 40.0 | 線段長寬比門檻 |
-| `--engine` | `pymupdf` | 文字抽取引擎 (`pymupdf` / `rapidocr`) |
+```bash
+pip install "exactpdfgrid[ocr]"   # RapidOCR backend for scanned PDFs
+pip install "exactpdfgrid[web]"   # Flask web UI / API server
+pip install "exactpdfgrid[all]"   # everything
+```
 
 ---
 
-## Python API
+## 1. Library — basic usage
 
-### Shorthand（callable module）
-
-最簡寫法 — `import exactpdfgrid` 後直接呼叫套件：
+The package is callable. Three positional arguments cover most use cases:
+`(pdf_path, engine, out_dir)`. The call returns the `pathlib.Path` of the
+generated workbook (or `None` if no tables were detected).
 
 ```python
 import exactpdfgrid
 
-# 一行搞定：(pdf_path, engine, out_dir)
-exactpdfgrid("input.pdf", "rapidocr", "outputpath")
+# Most explicit form
+xlsx_path = exactpdfgrid("input.pdf", "pymupdf", "output")
+print(xlsx_path)                          # output/input.xlsx
 
-# 使用預設引擎 (PyMuPDF) 與預設輸出目錄 "output"
+# Use defaults: engine="pymupdf", out_dir="output"
 exactpdfgrid("input.pdf")
+
+# Switch to OCR (requires the [ocr] extra)
+exactpdfgrid("input.pdf", "rapidocr", "out/")
 ```
 
-也可以使用匯出的引擎常數（避免拼字錯誤）：
+Equivalent forms — pick whichever reads best:
 
 ```python
 import exactpdfgrid
-from exactpdfgrid import PYMUPDF, RAPIDOCR
+from exactpdfgrid import PYMUPDF, RAPIDOCR, run
 
-exactpdfgrid("input.pdf", RAPIDOCR, "outputpath")
+exactpdfgrid("input.pdf", RAPIDOCR, "out/")      # exported string constant
+run("input.pdf", RAPIDOCR, "out/")               # explicit function (no module-callable magic)
 ```
 
-或使用顯式的 `run()` 函式（功能相同，無 module-callable 魔法）：
+`exactpdfgrid(...)`, `exactpdfgrid.run(...)`, and `exactpdfgrid.process_pdf(...)`
+all share the same underlying pipeline; the first two are shorthands.
 
-```python
-from exactpdfgrid import run, RAPIDOCR
-run("input.pdf", RAPIDOCR, "outputpath")
-```
+---
 
-Shorthand 也支援額外 keyword 參數，會直接透傳給 `process_pdf`：
+## 2. Library — advanced usage
 
-```python
-from exactpdfgrid import DetectionConfig
-exactpdfgrid("input.pdf", "rapidocr", "out/", detection=DetectionConfig(dpi=300))
-```
-
-### 完整 API（`process_pdf`）
-
-最小可用例：
-
-```python
-from exactpdfgrid import process_pdf
-
-process_pdf("input.pdf", out_dir="output")
-```
-
-完整客製：
+When you need to retune the pipeline, use `process_pdf` with three config
+dataclasses. Every field has a default that reproduces the out-of-the-box
+behavior — set only what you want to change.
 
 ```python
 from exactpdfgrid import (
@@ -131,16 +91,19 @@ det = DetectionConfig(
     ink_threshold=235,
     dilate_kernel=(3, 3),
     dilate_iterations=1,
+    cluster_gap=8,
 )
+
 ext = ExtractionConfig(
-    engine="rapidocr",            # or "pymupdf" (default)
+    engine="rapidocr",
     padding_px=3,
     clean_pipeline=[
         normalize_whitespace,
-        strip_square_brackets,    # 移除 [註記]
-        split_at_first_paren,     # 只保留第一個 "(" 之前的內容
+        strip_square_brackets,     # remove "[note]" annotations
+        split_at_first_paren,      # keep only text before the first "("
     ],
 )
+
 out = OutputConfig(apply_borders=True, min_col_width=6.0)
 
 xlsx_path = process_pdf(
@@ -150,72 +113,204 @@ xlsx_path = process_pdf(
     output=out,
     out_dir="output",
 )
-print(f"saved: {xlsx_path}")
 ```
 
-### 自訂 cleaner
+### Config field reference
 
-任何 `Callable[[str], str]` 都可以加入 `clean_pipeline`：
+| Config | Fields |
+| :--- | :--- |
+| `DetectionConfig` | `dpi`, `min_line_length`, `ink_threshold`, `max_gap`, `aspect_ratio`, `cluster_gap`, `dilate_kernel`, `dilate_iterations`, `morph_open_iterations`, `border_thickness`, `border_density` |
+| `ExtractionConfig` | `engine` (`str` or `TextExtractor`), `padding_px`, `clean_pipeline` (`list[Callable[[str], str]]`) |
+| `OutputConfig` | `apply_borders`, `apply_size_hints`, `min_col_width`, `min_row_height`, `px_per_char_calibration` |
+
+### Custom cleaners
+
+A cleaner is any `Callable[[str], str]`. The pipeline applies them in order to
+each cell's raw extracted text:
 
 ```python
+from exactpdfgrid import ExtractionConfig, normalize_whitespace
+
 def lower_and_strip(s: str) -> str:
     return s.strip().lower()
 
 ext = ExtractionConfig(clean_pipeline=[normalize_whitespace, lower_and_strip])
 ```
 
-### 自訂 TextExtractor
+Built-in cleaners (importable from `exactpdfgrid`):
+`normalize_whitespace`, `strip_square_brackets`, `strip_parentheses`,
+`split_at_first_paren`, `strip_outer_whitespace`.
 
-繼承 `TextExtractor` 即可接上自家 OCR/抽取邏輯：
+### Custom text extractor
+
+Plug in your own OCR / extraction engine by subclassing `TextExtractor`:
 
 ```python
-from exactpdfgrid import TextExtractor
+from exactpdfgrid import TextExtractor, ExtractionConfig, process_pdf
 
 class MyExtractor(TextExtractor):
     name = "mine"
+
     def extract(self, *, fitz_page, image, cell, dpi, padding_px) -> str:
-        ...  # 回傳該 cell 的原始文字
+        # fitz_page: PyMuPDF page  ·  image: BGR numpy array of the rendered page
+        # cell: CellRegion with pixel coords
+        return "..."
 
-ext = ExtractionConfig(engine=MyExtractor())
+process_pdf("input.pdf", extraction=ExtractionConfig(engine=MyExtractor()))
 ```
 
 ---
 
-## Web 介面
+## 3. CLI
 
-```powershell
-exactpdfgrid-web
-# 或：python -m exactpdfgrid.web.server
+The `exactpdfgrid` console script is installed alongside the library and is a
+thin wrapper around `process_pdf`:
+
+```bash
+exactpdfgrid input.pdf --out output --dpi 300 --engine rapidocr
 ```
 
-開啟 `http://localhost:5000`，拖放 PDF 即可下載 Excel。
+| Flag | Default | Notes |
+| :--- | :--- | :--- |
+| `--dpi` | `200` | Render resolution. |
+| `--out` | `output` | Output directory. |
+| `--engine` | `pymupdf` | `pymupdf` or `rapidocr`. |
+| `--min-line` | `8` | Minimum line length (px). |
+| `--ink-threshold` | `240` | Brightness ceiling for "ink". |
+| `--cluster-gap` | `8` | Max gap when clustering grid lines (px). |
+| `--aspect-ratio` | `40.0` | Aspect-ratio threshold for line blobs. |
+| `--border-thickness` | `6` | Half-thickness for border probe. |
+| `--border-density` | `0.20` | Ink density threshold. |
+
+Run `exactpdfgrid --help` for the full list.
 
 ---
 
-## 套件結構
+## 4. API server
 
+The `[web]` extra installs a Flask app that exposes the pipeline as a REST
+endpoint.
+
+### Install & launch
+
+```bash
+pip install "exactpdfgrid[web]"
+exactpdfgrid-web                          # binds 0.0.0.0:5000
+# or
+python -m exactpdfgrid.web.server
 ```
-src/exactpdfgrid/
-├── __init__.py          # 公開 API re-exports
-├── config.py            # DetectionConfig / ExtractionConfig / OutputConfig
-├── pdf_render.py        # PDF → image
-├── detection.py         # 線段偵測與 cell grid 建構
-├── extraction.py        # 引擎無關的文字抽取編排
-├── engines/
-│   ├── base.py          # TextExtractor ABC
-│   ├── pymupdf.py       # 預設後端
-│   └── rapidocr.py      # 選用 OCR 後端
-├── utils.py             # clean_text_pipeline + 內建 cleaners
-├── core.py              # process_pdf 高階入口
-├── output.py            # xlsx 寫出
-├── cli.py               # exactpdfgrid console script
-└── web/
-    ├── server.py        # exactpdfgrid-web console script
-    └── static/          # index.html / app.js / style.css
+
+### Routes
+
+| Method | Path | Purpose |
+| :--- | :--- | :--- |
+| `GET`  | `/`        | Serves the Web UI (`index.html`). |
+| `POST` | `/convert` | Converts a PDF and returns the `.xlsx` payload. |
+
+### `POST /convert` reference
+
+Request body must be `multipart/form-data`.
+
+| Field | Type | Default | Notes |
+| :--- | :--- | :--- | :--- |
+| `pdf` | file | — | **Required.** The PDF to convert. |
+| `dpi` | int | `200` | Render DPI. |
+| `min_line` | int | `8` | Minimum line length (px). |
+| `ink_threshold` | int | `240` | Brightness ceiling for "ink". |
+| `cluster_gap` | int | `8` | Grid-line cluster gap (px). |
+| `aspect_ratio` | float | `40.0` | Line blob aspect ratio. |
+| `engine` | str | `pymupdf` | `pymupdf` or `rapidocr` (requires `[ocr]` extra on the server). |
+
+Responses:
+
+| Status | Content-Type | Body |
+| :--- | :--- | :--- |
+| `200` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` | `.xlsx` file attachment named `<pdf-stem>.xlsx`. |
+| `400` | `application/json` | `{"error": "No pdf file uploaded"}` / `{"error": "File must be a PDF"}` |
+| `422` | `application/json` | `{"error": "No table cells detected in this PDF"}` |
+| `500` | `application/json` | `{"error": "..."}` for any unhandled server error. |
+
+### Calling the API
+
+**`curl`**:
+
+```bash
+curl -X POST http://localhost:5000/convert \
+     -F "pdf=@input.pdf" \
+     -F "engine=rapidocr" \
+     -F "dpi=300" \
+     -o output.xlsx
 ```
+
+**Python `requests`**:
+
+```python
+import requests
+
+with open("input.pdf", "rb") as fh:
+    response = requests.post(
+        "http://localhost:5000/convert",
+        files={"pdf": fh},
+        data={"engine": "rapidocr", "dpi": 300},
+    )
+
+response.raise_for_status()
+with open("output.xlsx", "wb") as out:
+    out.write(response.content)
+```
+
+### Deployment notes
+
+- The development server binds `0.0.0.0:5000` with `debug=False`. For
+  production, front it with a real WSGI server (e.g. `gunicorn`):
+  ```bash
+  gunicorn -w 4 -b 0.0.0.0:5000 exactpdfgrid.web.server:app
+  ```
+- Each request renders the full PDF in memory and writes a temp `.xlsx`;
+  both are cleaned up before the response returns. Plan worker concurrency
+  and request timeouts accordingly for large PDFs.
+- The endpoint has no built-in authentication. If exposed beyond localhost,
+  place it behind a reverse proxy that handles auth and TLS.
 
 ---
 
-## 授權
+## 5. Web UI
 
-MIT。
+When the API server is running, `GET /` serves a single-page UI from
+`src/exactpdfgrid/web/static/`. It is a thin front end for `POST /convert`,
+not a separate service.
+
+Features:
+
+- **PDF drop zone** — drag-and-drop or click-to-select a PDF.
+- **Advanced settings panel** (collapsible) — DPI, minimum line length, ink
+  threshold, aspect ratio, cluster gap. These map 1-to-1 to the
+  `POST /convert` form fields.
+- **Convert & download** button — posts to `/convert` and triggers a browser
+  download of the returned `.xlsx`.
+- **Inline status area** — shows progress and errors returned by the server.
+
+The UI currently exposes the detection-stage knobs; the `engine` field is not
+yet surfaced in the form and defaults to `pymupdf`. Use the REST API directly
+or the library if you need OCR from a non-browser client.
+
+---
+
+## 6. How it works
+
+1. **Render** — PyMuPDF rasterises each page at the requested DPI.
+2. **Detect** — OpenCV morphology + a connectivity check find the horizontal
+   and vertical line segments that form the table.
+3. **Reconstruct** — pure geometry assembles the segments into a logical
+   grid, including merged cells.
+4. **Extract** — for each cell, the chosen `TextExtractor` reads the text
+   (PyMuPDF clip-extract by default; RapidOCR on the cell crop if selected).
+5. **Clean** — text passes through your `clean_pipeline`.
+6. **Write** — `openpyxl` produces an `.xlsx` with proper merges, borders,
+   and approximate column widths / row heights derived from the pixel grid.
+
+---
+
+## License
+
+MIT.
