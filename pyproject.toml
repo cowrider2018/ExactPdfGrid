@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=61", "wheel", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "exactpdfgrid"
-version = "0.1.1"
+dynamic = ["version"]
 description = "Extract bordered tables from PDFs and export them to Excel (.xlsx)."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -48,3 +48,6 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 exactpdfgrid = ["web/static/*"]
+
+[tool.setuptools_scm]
+version_file = "src/exactpdfgrid/_version.py"
