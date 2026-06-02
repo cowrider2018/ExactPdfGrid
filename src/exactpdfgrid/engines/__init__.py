@@ -20,7 +20,8 @@ from .pymupdf import PyMuPDFExtractor
 
 def _make_rapidocr_auto() -> TextExtractor:
     # Lazy import: only triggered when the user actually selects "rapidocr".
-    # Prefers OpenVINO, falls back to ONNX Runtime with a warning.
+    # Uses unified rapidocr (>=3.0); prefers OpenVINO runtime, falls back to
+    # ONNX Runtime with a warning.
     from .rapidocr import RapidOCRExtractor
     return RapidOCRExtractor(backend="auto")
 
