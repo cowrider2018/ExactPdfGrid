@@ -9,6 +9,9 @@ dist/
 build/
 .eggs/
 
+# setuptools-scm generated version file
+src/exactpdfgrid/_version.py
+
 # Virtual environment
 .venv/
 venv/
