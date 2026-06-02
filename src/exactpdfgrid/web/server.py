@@ -22,7 +22,9 @@ POST /convert
         ink_threshold  (int,   default 240)
         cluster_gap    (int,   default 8)
         aspect_ratio   (float, default 40.0)
-        engine         (str,   default "pymupdf")
+        engine         (str,   default "pymupdf"; also accepts
+                        "rapidocr" / "rapidocr-vino" / "rapidocr-onnx" when
+                        the matching OCR extra is installed on the server)
 """
 
 from __future__ import annotations

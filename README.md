@@ -26,10 +26,17 @@ pip install exactpdfgrid
 Optional extras:
 
 ```bash
-pip install "exactpdfgrid[ocr]"   # RapidOCR backend for scanned PDFs
-pip install "exactpdfgrid[web]"   # Flask web UI / API server
-pip install "exactpdfgrid[all]"   # everything
+pip install "exactpdfgrid[ocr]"        # RapidOCR backend (OpenVINO — recommended)
+pip install "exactpdfgrid[ocr-onnx]"   # RapidOCR backend (ONNX Runtime — opt-out)
+pip install "exactpdfgrid[web]"        # Flask web UI / API server
+pip install "exactpdfgrid[all]"        # everything (web + OpenVINO OCR)
 ```
+
+The `[ocr]` extra installs `rapidocr-openvino` so OCR runs on Intel's
+OpenVINO Runtime by default — typically 1.5–3× faster than ONNX Runtime
+on Intel CPU/GPU. Pick `[ocr-onnx]` if OpenVINO is unavailable on your
+platform or conflicts with your environment; the produced `.xlsx` is
+identical either way.
 
 ---
 
@@ -57,10 +64,12 @@ Equivalent forms — pick whichever reads best:
 
 ```python
 import exactpdfgrid
-from exactpdfgrid import PYMUPDF, RAPIDOCR, run
+from exactpdfgrid import PYMUPDF, RAPIDOCR, RAPIDOCR_VINO, RAPIDOCR_ONNX, run
 
-exactpdfgrid("input.pdf", RAPIDOCR, "out/")      # exported string constant
-run("input.pdf", RAPIDOCR, "out/")               # explicit function (no module-callable magic)
+exactpdfgrid("input.pdf", RAPIDOCR, "out/")        # auto: OpenVINO, falls back to ONNX
+exactpdfgrid("input.pdf", RAPIDOCR_VINO, "out/")   # force OpenVINO (errors if not installed)
+exactpdfgrid("input.pdf", RAPIDOCR_ONNX, "out/")   # force ONNX Runtime
+run("input.pdf", RAPIDOCR, "out/")                 # explicit function (no module-callable magic)
 ```
 
 `exactpdfgrid(...)`, `exactpdfgrid.run(...)`, and `exactpdfgrid.process_pdf(...)`
@@ -174,7 +183,7 @@ exactpdfgrid input.pdf --out output --dpi 300 --engine rapidocr
 | :--- | :--- | :--- |
 | `--dpi` | `200` | Render resolution. |
 | `--out` | `output` | Output directory. |
-| `--engine` | `pymupdf` | `pymupdf` or `rapidocr`. |
+| `--engine` | `pymupdf` | `pymupdf`, `rapidocr` (auto: OpenVINO → ONNX fallback), `rapidocr-vino` (force OpenVINO), or `rapidocr-onnx` (force ONNX). |
 | `--min-line` | `8` | Minimum line length (px). |
 | `--ink-threshold` | `240` | Brightness ceiling for "ink". |
 | `--cluster-gap` | `8` | Max gap when clustering grid lines (px). |
@@ -219,7 +228,7 @@ Request body must be `multipart/form-data`.
 | `ink_threshold` | int | `240` | Brightness ceiling for "ink". |
 | `cluster_gap` | int | `8` | Grid-line cluster gap (px). |
 | `aspect_ratio` | float | `40.0` | Line blob aspect ratio. |
-| `engine` | str | `pymupdf` | `pymupdf` or `rapidocr` (requires `[ocr]` extra on the server). |
+| `engine` | str | `pymupdf` | `pymupdf`, `rapidocr` (auto), `rapidocr-vino`, or `rapidocr-onnx` (the latter three require an OCR extra on the server: `[ocr]` for OpenVINO, `[ocr-onnx]` for ONNX Runtime). |
 
 Responses:
 
@@ -304,7 +313,8 @@ or the library if you need OCR from a non-browser client.
 3. **Reconstruct** — pure geometry assembles the segments into a logical
    grid, including merged cells.
 4. **Extract** — for each cell, the chosen `TextExtractor` reads the text
-   (PyMuPDF clip-extract by default; RapidOCR on the cell crop if selected).
+   (PyMuPDF clip-extract by default; RapidOCR on the cell crop if selected —
+   accelerated by OpenVINO when the `[ocr]` extra is installed).
 5. **Clean** — text passes through your `clean_pipeline`.
 6. **Write** — `openpyxl` produces an `.xlsx` with proper merges, borders,
    and approximate column widths / row heights derived from the pixel grid.
