@@ -18,15 +18,28 @@ from .base import TextExtractor
 from .pymupdf import PyMuPDFExtractor
 
 
-def _make_rapidocr() -> TextExtractor:
+def _make_rapidocr_auto() -> TextExtractor:
     # Lazy import: only triggered when the user actually selects "rapidocr".
+    # Prefers OpenVINO, falls back to ONNX Runtime with a warning.
     from .rapidocr import RapidOCRExtractor
-    return RapidOCRExtractor()
+    return RapidOCRExtractor(backend="auto")
+
+
+def _make_rapidocr_vino() -> TextExtractor:
+    from .rapidocr import RapidOCRExtractor
+    return RapidOCRExtractor(backend="openvino")
+
+
+def _make_rapidocr_onnx() -> TextExtractor:
+    from .rapidocr import RapidOCRExtractor
+    return RapidOCRExtractor(backend="onnx")
 
 
 _BUILTIN_FACTORIES = {
     "pymupdf": PyMuPDFExtractor,
-    "rapidocr": _make_rapidocr,
+    "rapidocr": _make_rapidocr_auto,
+    "rapidocr-vino": _make_rapidocr_vino,
+    "rapidocr-onnx": _make_rapidocr_onnx,
 }
 
 
