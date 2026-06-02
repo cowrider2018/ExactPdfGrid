@@ -20,7 +20,10 @@ from .utils import (
     strip_square_brackets,
 )
 
-__version__ = "0.1.1"
+try:
+    from ._version import __version__
+except ImportError:  # source checkout without installation
+    __version__ = "0.0.0+unknown"
 
 
 # Engine string aliases (UPPER_CASE so they don't shadow the real `pymupdf`
