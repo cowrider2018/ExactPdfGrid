@@ -26,17 +26,19 @@ pip install exactpdfgrid
 Optional extras:
 
 ```bash
-pip install "exactpdfgrid[ocr]"        # RapidOCR backend (OpenVINO — recommended)
-pip install "exactpdfgrid[ocr-onnx]"   # RapidOCR backend (ONNX Runtime — opt-out)
+pip install "exactpdfgrid[ocr]"        # RapidOCR + OpenVINO (default, recommended)
+pip install "exactpdfgrid[ocr-onnx]"   # RapidOCR + ONNX Runtime (fallback)
+pip install "exactpdfgrid[ocr-all]"    # both OCR backends installed
 pip install "exactpdfgrid[web]"        # Flask web UI / API server
 pip install "exactpdfgrid[all]"        # everything (web + OpenVINO OCR)
 ```
 
-The `[ocr]` extra installs `rapidocr-openvino` so OCR runs on Intel's
-OpenVINO Runtime by default — typically 1.5–3× faster than ONNX Runtime
-on Intel CPU/GPU. Pick `[ocr-onnx]` if OpenVINO is unavailable on your
-platform or conflicts with your environment; the produced `.xlsx` is
-identical either way.
+The `[ocr]` extra installs the unified `rapidocr` package plus the
+`openvino` runtime so OCR runs on Intel's OpenVINO by default —
+typically 1.5–3× faster than ONNX Runtime on Intel CPU/GPU and
+supported on Python 3.9–3.13. Pick `[ocr-onnx]` if OpenVINO is
+unavailable on your platform or conflicts with your environment; the
+produced `.xlsx` is identical either way.
 
 ---
 
