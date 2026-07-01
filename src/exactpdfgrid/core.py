@@ -15,6 +15,7 @@ import fitz
 
 from .config import DetectionConfig, ExtractionConfig, OutputConfig
 from .detection import build_cell_grid, detect_line_segments, draw_debug
+from .detection_lineless import detect_gridlines_whitespace
 from .extraction import extract_cells_text
 from .output import resolve_grid, write_xlsx_workbook
 from .pdf_render import pdf_to_images, save_page_images
@@ -31,16 +32,27 @@ def _process_page(
     """Detect cells + extract text on a single page."""
     print(f"\n-- Page {page_index + 1} --------------------------------------------")
 
-    accepted, rejected = detect_line_segments(
-        img,
-        min_line_length=det.min_line_length,
-        ink_threshold=det.ink_threshold,
-        max_gap=det.max_gap,
-        aspect_ratio=det.aspect_ratio,
-        dilate_kernel=det.dilate_kernel,
-        dilate_iterations=det.dilate_iterations,
-        morph_open_iterations=det.morph_open_iterations,
-    )
+    if det.mode == "lineless":
+        accepted, rejected = detect_gridlines_whitespace(
+            img,
+            ink_threshold=det.ink_threshold,
+            min_gap_v=det.lineless_min_gap_v,
+            max_gap_v=det.lineless_max_gap_v,
+            min_gap_h=det.lineless_min_gap_h,
+            max_gap_h=det.lineless_max_gap_h,
+            ink_tolerance=det.lineless_ink_tolerance,
+        )
+    else:
+        accepted, rejected = detect_line_segments(
+            img,
+            min_line_length=det.min_line_length,
+            ink_threshold=det.ink_threshold,
+            max_gap=det.max_gap,
+            aspect_ratio=det.aspect_ratio,
+            dilate_kernel=det.dilate_kernel,
+            dilate_iterations=det.dilate_iterations,
+            morph_open_iterations=det.morph_open_iterations,
+        )
 
     cells, ys, xs = build_cell_grid(accepted, cluster_gap=det.cluster_gap)
 

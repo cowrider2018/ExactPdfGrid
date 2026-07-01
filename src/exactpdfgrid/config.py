@@ -32,6 +32,19 @@ class DetectionConfig:
     border_thickness: int = 6
     border_density: float = 0.20
 
+    # -- Lineless mode -------------------------------------------------------
+    # Table detection strategy: "lines" (black ruling lines, the default) or
+    # "lineless" (derive grid lines from blank whitespace corridors).
+    mode: str = "lines"
+    # Blank corridor width knobs (px). min_* filters inter-character spacing;
+    # max_* (0 = no limit) filters over-wide empty margins / blank regions -
+    # the lineless counterpart to the black-line `aspect_ratio` knob.
+    lineless_min_gap_v: int = 6
+    lineless_max_gap_v: int = 0
+    lineless_min_gap_h: int = 4
+    lineless_max_gap_h: int = 0
+    lineless_ink_tolerance: int = 0
+
 
 @dataclass
 class ExtractionConfig:

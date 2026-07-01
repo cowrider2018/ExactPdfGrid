@@ -9,6 +9,7 @@ from typing import Optional, Union
 from .config import DetectionConfig, ExtractionConfig, OutputConfig
 from .core import process_pdf
 from .detection import CellRegion, LineSegment
+from .detection_lineless import detect_gridlines_whitespace
 from .engines import TextExtractor, get_extractor
 from .utils import (
     TextCleaner,
@@ -101,6 +102,7 @@ __all__ = [
     "RAPIDOCR_ONNX",
     "CellRegion",
     "LineSegment",
+    "detect_gridlines_whitespace",
     "TextExtractor",
     "get_extractor",
     "TextCleaner",

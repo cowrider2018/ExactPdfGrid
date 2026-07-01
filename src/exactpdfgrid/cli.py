@@ -37,6 +37,25 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         "rapidocr (auto: OpenVINO with ONNX fallback), "
                         "rapidocr-vino (force OpenVINO), "
                         "or rapidocr-onnx (force ONNX Runtime)")
+    p.add_argument("--mode", choices=["lines", "lineless"], default="lines",
+                   help="Table detection strategy: lines (black ruling lines, "
+                        "default) or lineless (derive grid lines from blank "
+                        "whitespace corridors of aligned text)")
+    p.add_argument("--lineless-min-gap-v", type=int, default=6,
+                   help="Lineless: min blank column corridor width in px "
+                        "(default: 6)")
+    p.add_argument("--lineless-max-gap-v", type=int, default=0,
+                   help="Lineless: max blank column corridor width in px; "
+                        "0 = no limit (default: 0)")
+    p.add_argument("--lineless-min-gap-h", type=int, default=4,
+                   help="Lineless: min blank row corridor height in px "
+                        "(default: 4)")
+    p.add_argument("--lineless-max-gap-h", type=int, default=0,
+                   help="Lineless: max blank row corridor height in px; "
+                        "0 = no limit (default: 0)")
+    p.add_argument("--lineless-ink-tolerance", type=int, default=0,
+                   help="Lineless: ink pixels tolerated inside a blank "
+                        "corridor (default: 0)")
     return p.parse_args(argv)
 
 
@@ -51,6 +70,12 @@ def main(argv: list[str] | None = None) -> int:
         aspect_ratio=args.aspect_ratio,
         border_thickness=args.border_thickness,
         border_density=args.border_density,
+        mode=args.mode,
+        lineless_min_gap_v=args.lineless_min_gap_v,
+        lineless_max_gap_v=args.lineless_max_gap_v,
+        lineless_min_gap_h=args.lineless_min_gap_h,
+        lineless_max_gap_h=args.lineless_max_gap_h,
+        lineless_ink_tolerance=args.lineless_ink_tolerance,
     )
     ext = ExtractionConfig(engine=args.engine)
     out_cfg = OutputConfig()
