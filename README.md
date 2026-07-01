@@ -1,11 +1,21 @@
 # ExactPdfGrid
 
-Extract bordered tables from PDFs and export them to Excel (`.xlsx`).
+Extract tables from PDFs and export them to Excel (`.xlsx`).
 
 ExactPdfGrid detects table grid lines with OpenCV, reconstructs the cell
 layout (including merged cells), and writes a faithful `.xlsx` workbook with
 one sheet per page. Text is pulled from the PDF's native vector layer by
 default; for scanned PDFs you can swap in a RapidOCR backend.
+
+Two detection modes cover both common table styles:
+
+- **`lines`** (default) — tables drawn with black ruling lines. Grid lines are
+  found from the ink itself.
+- **`lineless`** — borderless tables that rely only on aligned text. Grid lines
+  are derived from the blank whitespace corridors that run through the content;
+  each corridor's centre line becomes a grid line. Tunable with white-corridor
+  min/max width knobs (the lineless counterpart to the black-line
+  `aspect_ratio`).
 
 The package ships **three usable surfaces** for the same pipeline:
 
@@ -130,7 +140,7 @@ xlsx_path = process_pdf(
 
 | Config | Fields |
 | :--- | :--- |
-| `DetectionConfig` | `dpi`, `min_line_length`, `ink_threshold`, `max_gap`, `aspect_ratio`, `cluster_gap`, `dilate_kernel`, `dilate_iterations`, `morph_open_iterations`, `border_thickness`, `border_density` |
+| `DetectionConfig` | `dpi`, `min_line_length`, `ink_threshold`, `max_gap`, `aspect_ratio`, `cluster_gap`, `dilate_kernel`, `dilate_iterations`, `morph_open_iterations`, `border_thickness`, `border_density`, `mode`, `lineless_min_gap_v`, `lineless_max_gap_v`, `lineless_min_gap_h`, `lineless_max_gap_h`, `lineless_ink_tolerance` |
 | `ExtractionConfig` | `engine` (`str` or `TextExtractor`), `padding_px`, `clean_pipeline` (`list[Callable[[str], str]]`) |
 | `OutputConfig` | `apply_borders`, `apply_size_hints`, `min_col_width`, `min_row_height`, `px_per_char_calibration` |
 
@@ -185,13 +195,25 @@ exactpdfgrid input.pdf --out output --dpi 300 --engine rapidocr
 | :--- | :--- | :--- |
 | `--dpi` | `200` | Render resolution. |
 | `--out` | `output` | Output directory. |
+| `--mode` | `lines` | Detection strategy: `lines` (black ruling lines) or `lineless` (blank whitespace corridors of aligned text). |
 | `--engine` | `pymupdf` | `pymupdf`, `rapidocr` (auto: OpenVINO → ONNX fallback), `rapidocr-vino` (force OpenVINO), or `rapidocr-onnx` (force ONNX). |
-| `--min-line` | `8` | Minimum line length (px). |
+| `--min-line` | `8` | Minimum line length (px). *(lines mode)* |
 | `--ink-threshold` | `240` | Brightness ceiling for "ink". |
 | `--cluster-gap` | `8` | Max gap when clustering grid lines (px). |
-| `--aspect-ratio` | `40.0` | Aspect-ratio threshold for line blobs. |
+| `--aspect-ratio` | `40.0` | Aspect-ratio threshold for line blobs. *(lines mode)* |
 | `--border-thickness` | `6` | Half-thickness for border probe. |
 | `--border-density` | `0.20` | Ink density threshold. |
+| `--lineless-min-gap-v` | `6` | Min blank **column** corridor width (px). *(lineless mode)* |
+| `--lineless-max-gap-v` | `0` | Max blank column corridor width (px); `0` = no limit. *(lineless mode)* |
+| `--lineless-min-gap-h` | `4` | Min blank **row** corridor height (px). *(lineless mode)* |
+| `--lineless-max-gap-h` | `0` | Max blank row corridor height (px); `0` = no limit. *(lineless mode)* |
+| `--lineless-ink-tolerance` | `0` | Ink pixels tolerated inside a blank corridor. *(lineless mode)* |
+
+Borderless (aligned-text) table example:
+
+```bash
+exactpdfgrid input.pdf --mode lineless --lineless-min-gap-v 8
+```
 
 Run `exactpdfgrid --help` for the full list.
 
@@ -226,10 +248,16 @@ Request body must be `multipart/form-data`.
 | :--- | :--- | :--- | :--- |
 | `pdf` | file | — | **Required.** The PDF to convert. |
 | `dpi` | int | `200` | Render DPI. |
-| `min_line` | int | `8` | Minimum line length (px). |
+| `mode` | str | `lines` | `lines` or `lineless`. |
+| `min_line` | int | `8` | Minimum line length (px). *(lines mode)* |
 | `ink_threshold` | int | `240` | Brightness ceiling for "ink". |
 | `cluster_gap` | int | `8` | Grid-line cluster gap (px). |
-| `aspect_ratio` | float | `40.0` | Line blob aspect ratio. |
+| `aspect_ratio` | float | `40.0` | Line blob aspect ratio. *(lines mode)* |
+| `lineless_min_gap_v` | int | `6` | Min blank column corridor width (px). *(lineless mode)* |
+| `lineless_max_gap_v` | int | `0` | Max blank column corridor width (px); `0` = no limit. *(lineless mode)* |
+| `lineless_min_gap_h` | int | `4` | Min blank row corridor height (px). *(lineless mode)* |
+| `lineless_max_gap_h` | int | `0` | Max blank row corridor height (px); `0` = no limit. *(lineless mode)* |
+| `lineless_ink_tolerance` | int | `0` | Ink pixels tolerated inside a blank corridor. *(lineless mode)* |
 | `engine` | str | `pymupdf` | `pymupdf`, `rapidocr` (auto), `rapidocr-vino`, or `rapidocr-onnx` (the latter three require an OCR extra on the server: `[ocr]` for OpenVINO, `[ocr-onnx]` for ONNX Runtime). |
 
 Responses:
@@ -294,26 +322,31 @@ not a separate service.
 Features:
 
 - **PDF drop zone** — drag-and-drop or click-to-select a PDF.
-- **Advanced settings panel** (collapsible) — DPI, minimum line length, ink
-  threshold, aspect ratio, cluster gap. These map 1-to-1 to the
-  `POST /convert` form fields.
+- **Detection mode** — `lines` (black-line) or `lineless` (aligned-text) selector.
+- **Text engine** — `pymupdf` or the RapidOCR variants (`rapidocr`,
+  `rapidocr-vino`, `rapidocr-onnx`); the OCR options require the matching OCR
+  extra installed on the server.
+- **Advanced settings panel** (collapsible) — DPI, ink threshold, cluster gap,
+  plus mode-specific knobs that show/hide with the selected mode: line length /
+  aspect ratio for `lines`, and the white-corridor min/max gap and ink-tolerance
+  knobs for `lineless`. These map 1-to-1 to the `POST /convert` form fields.
 - **Convert & download** button — posts to `/convert` and triggers a browser
   download of the returned `.xlsx`.
 - **Inline status area** — shows progress and errors returned by the server.
-
-The UI currently exposes the detection-stage knobs; the `engine` field is not
-yet surfaced in the form and defaults to `pymupdf`. Use the REST API directly
-or the library if you need OCR from a non-browser client.
 
 ---
 
 ## 6. How it works
 
 1. **Render** — PyMuPDF rasterises each page at the requested DPI.
-2. **Detect** — OpenCV morphology + a connectivity check find the horizontal
-   and vertical line segments that form the table.
+2. **Detect** — the line-extraction step depends on `mode`:
+   - `lines`: OpenCV morphology + a connectivity check find the horizontal and
+     vertical line segments drawn on the page.
+   - `lineless`: a whitespace-projection scan finds the blank corridors running
+     through the content and emits a grid line at each corridor's centre.
+   Both produce the same list of line segments, so everything downstream is shared.
 3. **Reconstruct** — pure geometry assembles the segments into a logical
-   grid, including merged cells.
+   grid, including merged cells (`lines` mode).
 4. **Extract** — for each cell, the chosen `TextExtractor` reads the text
    (PyMuPDF clip-extract by default; RapidOCR on the cell crop if selected —
    accelerated by OpenVINO when the `[ocr]` extra is installed).
