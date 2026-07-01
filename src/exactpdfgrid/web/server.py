@@ -17,14 +17,20 @@ Then open http://localhost:5000 in your browser.
 POST /convert
     Form field: pdf  (multipart/form-data, file)
     Form fields (all optional):
-        dpi            (int,   default 200)
-        min_line       (int,   default 8)
-        ink_threshold  (int,   default 240)
-        cluster_gap    (int,   default 8)
-        aspect_ratio   (float, default 40.0)
-        engine         (str,   default "pymupdf"; also accepts
-                        "rapidocr" / "rapidocr-vino" / "rapidocr-onnx" when
-                        the matching OCR extra is installed on the server)
+        dpi                    (int,   default 200)
+        min_line               (int,   default 8)
+        ink_threshold          (int,   default 240)
+        cluster_gap            (int,   default 8)
+        aspect_ratio           (float, default 40.0)
+        mode                   (str,   default "lines"; "lines" | "lineless")
+        lineless_min_gap_v     (int,   default 6)    lineless mode only
+        lineless_max_gap_v     (int,   default 0)    0 = no limit
+        lineless_min_gap_h     (int,   default 4)
+        lineless_max_gap_h     (int,   default 0)    0 = no limit
+        lineless_ink_tolerance (int,   default 0)
+        engine                 (str,   default "pymupdf"; also accepts
+                                "rapidocr" / "rapidocr-vino" / "rapidocr-onnx"
+                                when the matching OCR extra is installed)
 """
 
 from __future__ import annotations
@@ -68,6 +74,12 @@ def convert():
         ink_threshold=int(request.form.get("ink_threshold", 240)),
         cluster_gap=int(request.form.get("cluster_gap", 8)),
         aspect_ratio=float(request.form.get("aspect_ratio", 40.0)),
+        mode=request.form.get("mode", "lines"),
+        lineless_min_gap_v=int(request.form.get("lineless_min_gap_v", 6)),
+        lineless_max_gap_v=int(request.form.get("lineless_max_gap_v", 0)),
+        lineless_min_gap_h=int(request.form.get("lineless_min_gap_h", 4)),
+        lineless_max_gap_h=int(request.form.get("lineless_max_gap_h", 0)),
+        lineless_ink_tolerance=int(request.form.get("lineless_ink_tolerance", 0)),
     )
     ext = ExtractionConfig(engine=request.form.get("engine", "pymupdf"))
     out_cfg = OutputConfig()

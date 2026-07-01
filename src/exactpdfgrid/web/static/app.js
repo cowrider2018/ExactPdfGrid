@@ -6,6 +6,8 @@
   const statusEl     = document.getElementById('status');
   const advToggle    = document.getElementById('advToggle');
   const advPanel     = document.getElementById('advPanel');
+  const modeEl       = document.getElementById('mode');
+  const engineEl     = document.getElementById('engine');
 
   // ── Advanced panel toggle ──────────────────────────────────────────────
   const toggleAdv = () => {
@@ -15,6 +17,18 @@
 
   advToggle.addEventListener('click', toggleAdv);
   advToggle.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') toggleAdv(); });
+
+  // ── Show only the knobs relevant to the selected detection mode ─────────
+  const applyModeVisibility = () => {
+    const lineless = modeEl.value === 'lineless';
+    document.querySelectorAll('.lineless-only')
+      .forEach(el => el.classList.toggle('hidden', !lineless));
+    document.querySelectorAll('.lines-only')
+      .forEach(el => el.classList.toggle('hidden', lineless));
+  };
+
+  modeEl.addEventListener('change', applyModeVisibility);
+  applyModeVisibility();
 
   // ── Upload area: click to open file picker ─────────────────────────────
   uploadArea.addEventListener('click', () => pdfFile.click());
@@ -65,11 +79,18 @@
     const file = pdfFile.files[0];
     const formData = new FormData();
     formData.append('pdf',           file);
+    formData.append('mode',          modeEl.value);
+    formData.append('engine',        engineEl.value);
     formData.append('dpi',           document.getElementById('dpi').value);
-    formData.append('min_line',      document.getElementById('minLine').value);
     formData.append('ink_threshold', document.getElementById('inkThreshold').value);
-    formData.append('aspect_ratio',  document.getElementById('aspectRatio').value);
     formData.append('cluster_gap',   document.getElementById('clusterGap').value);
+    formData.append('min_line',      document.getElementById('minLine').value);
+    formData.append('aspect_ratio',  document.getElementById('aspectRatio').value);
+    formData.append('lineless_min_gap_v',     document.getElementById('llMinGapV').value);
+    formData.append('lineless_max_gap_v',     document.getElementById('llMaxGapV').value);
+    formData.append('lineless_min_gap_h',     document.getElementById('llMinGapH').value);
+    formData.append('lineless_max_gap_h',     document.getElementById('llMaxGapH').value);
+    formData.append('lineless_ink_tolerance', document.getElementById('llInkTol').value);
 
     convertBtn.disabled = true;
     setStatus('<span class="spinner"></span>轉換中，請稍候…', 'loading');

@@ -34,6 +34,26 @@
         </div>
       </div>
 
+      <!-- 偵測模式 -->
+      <div class="field">
+        <label class="label-icon">🧭 偵測模式</label>
+        <select id="mode" class="select-input">
+          <option value="lines">黑線模式（有框線表格）</option>
+          <option value="lineless">無線模式（對齊文字，無框線）</option>
+        </select>
+      </div>
+
+      <!-- 文字引擎 -->
+      <div class="field">
+        <label class="label-icon">🔤 文字引擎</label>
+        <select id="engine" class="select-input">
+          <option value="pymupdf">PyMuPDF（原生向量文字，預設）</option>
+          <option value="rapidocr">RapidOCR（自動：OpenVINO → ONNX）</option>
+          <option value="rapidocr-vino">RapidOCR — OpenVINO</option>
+          <option value="rapidocr-onnx">RapidOCR — ONNX Runtime</option>
+        </select>
+      </div>
+
       <!-- 進階設定 -->
       <div class="field">
         <label class="label-icon adv-toggle" id="advToggle" role="button" tabindex="0">
@@ -46,20 +66,42 @@
             <input type="number" id="dpi" value="200" min="72" max="600" />
           </div>
           <div class="adv-row">
-            <label>最小線段像素</label>
-            <input type="number" id="minLine" value="8" min="1" max="200" />
-          </div>
-          <div class="adv-row">
             <label>墨水門檻</label>
             <input type="number" id="inkThreshold" value="240" min="100" max="255" />
           </div>
           <div class="adv-row">
+            <label>Cluster 間距</label>
+            <input type="number" id="clusterGap" value="8" min="1" max="40" />
+          </div>
+          <!-- 黑線模式專屬 -->
+          <div class="adv-row lines-only">
+            <label>最小線段像素</label>
+            <input type="number" id="minLine" value="8" min="1" max="200" />
+          </div>
+          <div class="adv-row lines-only">
             <label>線段長寬比</label>
             <input type="number" id="aspectRatio" value="40" min="1" max="100" step="0.5" />
           </div>
-          <div class="adv-row">
-            <label>Cluster 間距</label>
-            <input type="number" id="clusterGap" value="8" min="1" max="40" />
+          <!-- 無線模式專屬 -->
+          <div class="adv-row lineless-only">
+            <label>直向走廊最小寬 (px)</label>
+            <input type="number" id="llMinGapV" value="6" min="1" max="200" />
+          </div>
+          <div class="adv-row lineless-only">
+            <label>直向走廊最大寬 (0=不限)</label>
+            <input type="number" id="llMaxGapV" value="0" min="0" max="500" />
+          </div>
+          <div class="adv-row lineless-only">
+            <label>橫向走廊最小高 (px)</label>
+            <input type="number" id="llMinGapH" value="4" min="1" max="200" />
+          </div>
+          <div class="adv-row lineless-only">
+            <label>橫向走廊最大高 (0=不限)</label>
+            <input type="number" id="llMaxGapH" value="0" min="0" max="500" />
+          </div>
+          <div class="adv-row lineless-only">
+            <label>走廊容許墨點</label>
+            <input type="number" id="llInkTol" value="0" min="0" max="9999" />
           </div>
         </div>
       </div>

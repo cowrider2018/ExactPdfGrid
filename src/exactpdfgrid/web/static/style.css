@@ -156,7 +156,7 @@ body {
 
 .adv-panel {
   overflow: hidden;
-  max-height: 300px;
+  max-height: 720px;
   transition: max-height .3s ease, opacity .3s ease;
   opacity: 1;
 }
@@ -170,6 +170,8 @@ body {
   gap: 12px;
   margin-top: 10px;
 }
+
+.adv-row.hidden { display: none; }
 
 .adv-row label {
   font-size: 12px;
@@ -190,6 +192,26 @@ body {
 }
 
 .adv-row input[type="number"]:focus {
+  outline: none;
+  border-color: #5A7656;
+  box-shadow: 0 0 0 3px rgba(90,118,86,.1);
+}
+
+/* ── Select inputs (mode / engine) ── */
+.select-input {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #D4C4B0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Georgia', serif;
+  color: #4A4A4A;
+  background: #FFFBF8;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+
+.select-input:focus {
   outline: none;
   border-color: #5A7656;
   box-shadow: 0 0 0 3px rgba(90,118,86,.1);
