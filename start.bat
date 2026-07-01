@@ -15,15 +15,20 @@ if not exist ".venv\Scripts\python.exe" (
     echo [1/4] Virtual environment already exists, skipping creation
 )
 
-:: 2. Editable install with web extra
-echo [2/4] Installing exactpdfgrid (editable, with [web] extra)...
-.venv\Scripts\python.exe -m pip install -e ".[web]" --quiet
+:: 2. Editable install with web UI + both OCR runtimes.
+::    [web]      -> Flask server / Web UI
+::    [ocr-all]  -> unified rapidocr + OpenVINO + ONNX Runtime, so every
+::                  engine option in the UI (pymupdf / rapidocr /
+::                  rapidocr-vino / rapidocr-onnx) works out of the box.
+::    OpenVINO is the heavier download; the first run may take a while.
+echo [2/4] Installing exactpdfgrid (editable, with [web,ocr-all] extras)...
+.venv\Scripts\python.exe -m pip install -e ".[web,ocr-all]" --quiet
 if errorlevel 1 (
     echo ERROR: Installation failed
     pause
     exit /b 1
 )
-echo Installed exactpdfgrid in editable mode
+echo Installed exactpdfgrid in editable mode (web + OpenVINO/ONNX OCR)
 
 :: 3. Create output folder if missing
 if not exist "output" mkdir output
