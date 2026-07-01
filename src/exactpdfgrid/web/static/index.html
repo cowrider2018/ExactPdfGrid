@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ExactPdfGrid – PDF 表格提取</title>
+  <title>ExactPdfGrid – PDF Table Extraction</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -14,7 +14,7 @@
       <div class="title-icon">📊</div>
       <div>
         <h1 class="main-title">ExactPdfGrid</h1>
-        <p class="subtitle">PDF 表格 → Excel 轉換工具</p>
+        <p class="subtitle">PDF tables → Excel converter</p>
       </div>
     </div>
 
@@ -22,42 +22,42 @@
 
     <div class="form-section">
 
-      <!-- PDF 上傳 -->
+      <!-- PDF upload -->
       <div class="field">
-        <label class="label-icon">📄 PDF 檔案</label>
+        <label class="label-icon">📄 PDF file</label>
         <input id="pdfFile" type="file" accept="application/pdf" />
         <div id="pdfUploadArea" class="pdf-upload-area">
           <div class="upload-icon">📁</div>
-          <p class="upload-text">拖放 PDF 到此</p>
-          <p class="upload-subtext">或點擊選擇檔案</p>
+          <p class="upload-text">Drop a PDF here</p>
+          <p class="upload-subtext">or click to choose a file</p>
           <div id="fileName" class="file-name"></div>
         </div>
       </div>
 
-      <!-- 偵測模式 -->
+      <!-- Detection mode -->
       <div class="field">
-        <label class="label-icon">🧭 偵測模式</label>
+        <label class="label-icon">🧭 Detection mode</label>
         <select id="mode" class="select-input">
-          <option value="lines">黑線模式（有框線表格）</option>
-          <option value="lineless">無線模式（對齊文字，無框線）</option>
+          <option value="lines">Lines (bordered tables)</option>
+          <option value="lineless">Lineless (aligned text, no borders)</option>
         </select>
       </div>
 
-      <!-- 文字引擎 -->
+      <!-- Text engine -->
       <div class="field">
-        <label class="label-icon">🔤 文字引擎</label>
+        <label class="label-icon">🔤 Text engine</label>
         <select id="engine" class="select-input">
-          <option value="pymupdf">PyMuPDF（原生向量文字，預設）</option>
-          <option value="rapidocr">RapidOCR（自動：OpenVINO → ONNX）</option>
+          <option value="pymupdf">PyMuPDF (native vector text, default)</option>
+          <option value="rapidocr">RapidOCR (auto: OpenVINO → ONNX)</option>
           <option value="rapidocr-vino">RapidOCR — OpenVINO</option>
           <option value="rapidocr-onnx">RapidOCR — ONNX Runtime</option>
         </select>
       </div>
 
-      <!-- 進階設定 -->
+      <!-- Advanced settings -->
       <div class="field">
         <label class="label-icon adv-toggle" id="advToggle" role="button" tabindex="0">
-          ⚙️ 進階設定
+          ⚙️ Advanced settings
           <span class="toggle-arrow">▶</span>
         </label>
         <div id="advPanel" class="adv-panel collapsed">
@@ -66,51 +66,51 @@
             <input type="number" id="dpi" value="200" min="72" max="600" />
           </div>
           <div class="adv-row">
-            <label>墨水門檻</label>
+            <label>Ink threshold</label>
             <input type="number" id="inkThreshold" value="240" min="100" max="255" />
           </div>
           <div class="adv-row">
-            <label>Cluster 間距</label>
+            <label>Cluster gap</label>
             <input type="number" id="clusterGap" value="8" min="1" max="40" />
           </div>
-          <!-- 黑線模式專屬 -->
+          <!-- lines mode only -->
           <div class="adv-row lines-only">
-            <label>最小線段像素</label>
+            <label>Min line length (px)</label>
             <input type="number" id="minLine" value="8" min="1" max="200" />
           </div>
           <div class="adv-row lines-only">
-            <label>線段長寬比</label>
+            <label>Line aspect ratio</label>
             <input type="number" id="aspectRatio" value="40" min="1" max="100" step="0.5" />
           </div>
-          <!-- 無線模式專屬 -->
+          <!-- lineless mode only -->
           <div class="adv-row lineless-only">
-            <label>直向走廊最小寬 (px)</label>
+            <label>Min column corridor (px)</label>
             <input type="number" id="llMinGapV" value="6" min="1" max="200" />
           </div>
           <div class="adv-row lineless-only">
-            <label>直向走廊最大寬 (0=不限)</label>
+            <label>Max column corridor (0=none)</label>
             <input type="number" id="llMaxGapV" value="0" min="0" max="500" />
           </div>
           <div class="adv-row lineless-only">
-            <label>橫向走廊最小高 (px)</label>
+            <label>Min row corridor (px)</label>
             <input type="number" id="llMinGapH" value="4" min="1" max="200" />
           </div>
           <div class="adv-row lineless-only">
-            <label>橫向走廊最大高 (0=不限)</label>
+            <label>Max row corridor (0=none)</label>
             <input type="number" id="llMaxGapH" value="0" min="0" max="500" />
           </div>
           <div class="adv-row lineless-only">
-            <label>走廊容許墨點</label>
+            <label>Corridor ink tolerance</label>
             <input type="number" id="llInkTol" value="0" min="0" max="9999" />
           </div>
         </div>
       </div>
 
-      <!-- 送出按鈕 -->
-      <button id="convertBtn" class="btn-primary">轉換並下載 xlsx</button>
+      <!-- Submit button -->
+      <button id="convertBtn" class="btn-primary">Convert & download xlsx</button>
     </div>
 
-    <!-- 狀態 -->
+    <!-- Status -->
     <div id="status" class="status"></div>
   </div>
 

@@ -58,21 +58,21 @@
       dt.items.add(file);
       pdfFile.files = dt.files;
     } else {
-      setStatus('請拖放有效的 PDF 檔案', 'error');
+      setStatus('Please drop a valid PDF file', 'error');
     }
   });
 
   function showFile(file) {
     fileNameEl.textContent = file.name;
     fileNameEl.classList.add('active');
-    uploadArea.querySelector('.upload-text').textContent = '已選擇檔案';
+    uploadArea.querySelector('.upload-text').textContent = 'File selected';
     clearStatus();
   }
 
   // ── Convert & download ─────────────────────────────────────────────────
   convertBtn.addEventListener('click', async () => {
     if (!pdfFile.files.length) {
-      setStatus('請先選擇 PDF 檔案', 'error');
+      setStatus('Please choose a PDF file first', 'error');
       return;
     }
 
@@ -93,7 +93,7 @@
     formData.append('lineless_ink_tolerance', document.getElementById('llInkTol').value);
 
     convertBtn.disabled = true;
-    setStatus('<span class="spinner"></span>轉換中，請稍候…', 'loading');
+    setStatus('<span class="spinner"></span>Converting, please wait…', 'loading');
 
     try {
       const resp = await fetch('/convert', { method: 'POST', body: formData });
@@ -121,9 +121,9 @@
       a.remove();
       URL.revokeObjectURL(url);
 
-      setStatus(`✅ 已完成！下載 <strong>${filename}</strong>`, '');
+      setStatus(`✅ Done! Downloaded <strong>${filename}</strong>`, '');
     } catch (err) {
-      setStatus(`❌ 錯誤：${err.message}`, 'error');
+      setStatus(`❌ Error: ${err.message}`, 'error');
     } finally {
       convertBtn.disabled = false;
     }
